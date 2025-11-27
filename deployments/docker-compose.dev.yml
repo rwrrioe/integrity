@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:8
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+      - ./redis-conf:/usr/local/etc/redis/redis.conf:ro
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - integrity_net
+    backend:
+      build:
+        context: ..
+        dockerfile: backend/Dockerfile
+        ssh:
+          - default
+        container_name: integrity_backend
+        depends_on:
+          - redis
+          - db
+        ports:
+          - "8080:8080"
+        networks:
+          - integrity_net
+    db:
+      image: postgres:17-alpine
+      container_name: integrity_db_dev
+      restart: always
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: 1234
+        POSTGRES_DB: integritydb
+      ports:
+        - "5432:5432"
+      volumes:
+        - db_data_dev:/var/lib/postgresql/data
+      networks:
+        - integrity_net
+
+networks:
+  pythia_net:
+    driver: bridge
+volumes:
+  db_data_dev:
