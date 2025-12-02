@@ -9,6 +9,7 @@ type Employee struct {
 	Phone      string
 	ObjectId   uuid.UUID
 	RoleId     uint
+	RoleName   string
 }
 
 type Role struct {

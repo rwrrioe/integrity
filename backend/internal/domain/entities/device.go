@@ -20,3 +20,13 @@ type DeviceAnalytics struct {
 	DeviceId  uuid.UUID `json:"device_id"`
 	Analytics string    `json:"analytics"`
 }
+
+type DeviceStateMetrics struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+type DeviceMetrics struct {
+	AvgCondition float64              `json:"avg_condition"`
+	StateMetrics []DeviceStateMetrics `json:"state_metrics"`
+}

@@ -18,3 +18,13 @@ type Task struct {
 	Status      string
 	AssignedTo  uint
 }
+
+type TaskStateMetrics struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+type TaskMetrics struct {
+	AvgImp       float64            `json:"avg_importance"`
+	StateMetrics []TaskStateMetrics `json:"state_metrics"`
+}

@@ -8,3 +8,10 @@ type Object struct {
 	Description string
 	Address     string
 }
+
+type ObjectFullInfo struct {
+	Object    Object
+	Devices   []Device
+	Tasks     []Task
+	Employees []Employee
+}
