@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rwrrioe/integrity/backend/internal/domain/entities"
 	"github.com/rwrrioe/integrity/backend/internal/repository/models"
 	"gorm.io/gorm"
@@ -17,7 +18,9 @@ type TaskRepo interface {
 	SaveTask(ctx context.Context, task *entities.Task) error
 	ChangeStatus(ctx context.Context, taskId int, status string) error
 	AssignEmployee(ctx context.Context, taskId int, employeeId int) error
-	ListByObject(ctx context.Context, objectId int) (*[]entities.Task, error)
+	ListByObject(ctx context.Context, objectId uuid.UUID) (*[]entities.Task, error)
+	GetAvgImportance(ctx context.Context, objectId uuid.UUID) (float64, error)
+	ListByStatus(ctx context.Context, objectId uuid.UUID, status string) (*[]entities.Device, error)
 }
 
 type TaskRepository struct {
@@ -45,9 +48,6 @@ func (r *TaskRepository) SaveTask(ctx context.Context, task *entities.Task) erro
 	model := TaskToModel(*task)
 
 	if err := r.db.WithContext(ctx).Save(&model).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrTaskNotFound
-		}
 		return err
 	}
 
@@ -55,19 +55,13 @@ func (r *TaskRepository) SaveTask(ctx context.Context, task *entities.Task) erro
 }
 
 func (r *TaskRepository) ChangeStatus(ctx context.Context, taskId int, status string) error {
-	task, err := r.GetTask(ctx, taskId)
-	if err != nil {
-		return err
+	result := r.db.Model(&models.Task{}).WithContext(ctx).Where("task_id=?", taskId).Update("status", status)
+	if result.Error != nil {
+		return result.Error
 	}
 
-	model := TaskToModel(*task)
-	model.Status = status
-	result := r.db.WithContext(ctx).Save(&model)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return ErrTaskNotFound
-		}
-		return result.Error
+	if result.RowsAffected == 0 {
+		return ErrTaskNotFound
 	}
 	return nil
 }
@@ -97,7 +91,7 @@ func (r *TaskRepository) AssignEmployee(ctx context.Context, taskId int, employe
 	return nil
 }
 
-func (r *TaskRepository) ListByObject(ctx context.Context, objectId int) (*[]entities.Task, error) {
+func (r *TaskRepository) ListByObject(ctx context.Context, objectId uuid.UUID) (*[]entities.Task, error) {
 	var models []models.Task
 
 	if err := r.db.WithContext(ctx).Where("object_id=?", objectId).Preload("Employees").Find(&models).Error; err != nil {
@@ -106,6 +100,33 @@ func (r *TaskRepository) ListByObject(ctx context.Context, objectId int) (*[]ent
 		}
 		return nil, err
 	}
+	var tasks []entities.Task
+	for _, model := range models {
+		task := TaskToEntity(model)
+		tasks = append(tasks, task)
+	}
+	return &tasks, nil
+}
+
+func (r *TaskRepository) GetAvgImportance(ctx context.Context, objectId uuid.UUID) (float64, error) {
+	var avgImp float64
+
+	if err := r.db.Select("ROUND(AVG(importance), 2)").Where("object_id=?", objectId).Table("tasks").Find(&avgImp).Error; err != nil {
+		return 0.0, err
+	}
+	return avgImp, nil
+}
+
+func (r *TaskRepository) ListByStatus(ctx context.Context, objectId uuid.UUID, status string) (*[]entities.Task, error) {
+	var models []models.Task
+
+	if err := r.db.WithContext(ctx).Where("status=? AND object_id=?", status, objectId).Find(&models).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrDeviceNotFound
+		}
+		return nil, err
+	}
+
 	var tasks []entities.Task
 	for _, model := range models {
 		task := TaskToEntity(model)

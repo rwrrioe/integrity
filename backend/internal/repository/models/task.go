@@ -18,7 +18,7 @@ type Task struct {
 	Status      string  `gorm:"not null"`
 	AssignedTo  uint
 
-	Object   Object     `gorm:"foreignKey:ObjectId;references:ObjectId"`
-	Device   Device     `gorm:"foreignKey:DeviceId;references:DeviceId"`
-	Employee []Employee `gorm:"many2many:task_employees;joinForeignKey:TaskId;joinReferences:EmployeeId"`
+	Object    Object     `gorm:"foreignKey:ObjectId;references:ObjectId"`
+	Device    Device     `gorm:"foreignKey:DeviceId;references:DeviceId"`
+	Employees []Employee `gorm:"many2many:task_employees;joinForeignKey:TaskId;joinReferences:EmployeeId"`
 }
