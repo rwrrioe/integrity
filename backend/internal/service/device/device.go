@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/rwrrioe/integrity/backend/internal/domain/entities"
 	"github.com/rwrrioe/integrity/backend/internal/domain/requests"
 	"github.com/rwrrioe/integrity/backend/internal/repository"
@@ -15,9 +16,9 @@ import (
 type DeviceProvider interface {
 	AddDevice(ctx context.Context, req *requests.CreateDeviceRequest) error
 	GetDevice(ctx context.Context, deviceId int) (*entities.Device, error)
-	ListDevices(ctx context.Context, objectId int) (*[]entities.Device, error)
-	UpdateDevice(ctx context.Context, req *requests.UpdateDeviceRequest) error
+	ListDevices(ctx context.Context, objectId uuid.UUID) (*[]entities.Device, error)
 	GetAnalytics(ctx context.Context, deviceId int) (*entities.DeviceAnalytics, error)
+	GetDeviceMetrics(ctx context.Context, objectId uuid.UUID) (*entities.DeviceMetrics, error)
 }
 
 type DeviceService struct {
@@ -67,7 +68,7 @@ func (s *DeviceService) AddDevice(ctx context.Context, req *requests.CreateDevic
 	return nil
 }
 
-func (s *DeviceService) GetDevice(ctx context.Context, deviceId int) (*entities.Device, error) {
+func (s *DeviceService) GetDevice(ctx context.Context, deviceId uuid.UUID) (*entities.Device, error) {
 	device, err := s.repo.GetDevice(ctx, deviceId)
 	if err != nil {
 		return nil, err
@@ -76,7 +77,7 @@ func (s *DeviceService) GetDevice(ctx context.Context, deviceId int) (*entities.
 	return device, nil
 }
 
-func (s *DeviceService) GetAnalytics(ctx context.Context, deviceId int) (*entities.DeviceAnalytics, error) {
+func (s *DeviceService) GetAnalytics(ctx context.Context, deviceId uuid.UUID) (*entities.DeviceAnalytics, error) {
 	var analytics entities.DeviceAnalytics
 	key := fmt.Sprintf("device:analytics:%d", deviceId)
 	res, err := s.redis.Get(ctx, key)
@@ -124,6 +125,53 @@ func (s *DeviceService) GetAnalytics(ctx context.Context, deviceId int) (*entiti
 	if err := s.redis.Set(ctx, key, analytics); err != nil {
 		return nil, err
 	}
-	
+
 	return &analytics, nil
+}
+
+func (s *DeviceService) GetDeviceMetrics(ctx context.Context, objectId uuid.UUID) (*entities.DeviceMetrics, error) {
+	var stateMetrics []entities.DeviceStateMetrics
+	oks, err := s.repo.ListByStatus(ctx, objectId, "OK")
+	if err != nil {
+		return nil, err
+	}
+
+	warnings, err := s.repo.ListByStatus(ctx, objectId, "Warning")
+	if err != nil {
+		return nil, err
+	}
+
+	criticals, err := s.repo.ListByStatus(ctx, objectId, "Critical")
+	if err != nil {
+		return nil, err
+	}
+
+	okMetric := entities.DeviceStateMetrics{
+		Status: "ok",
+		Count:  len(*oks),
+	}
+	stateMetrics = append(stateMetrics, okMetric)
+
+	warningMetric := entities.DeviceStateMetrics{
+		Status: "warning",
+		Count:  len(*warnings),
+	}
+	stateMetrics = append(stateMetrics, warningMetric)
+
+	criticalMetric := entities.DeviceStateMetrics{
+		Status: "critical",
+		Count:  len(*criticals),
+	}
+	stateMetrics = append(stateMetrics, criticalMetric)
+
+	avgCond, err := s.repo.GetAvgCondition(ctx, objectId)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics := entities.DeviceMetrics{
+		AvgCondition: avgCond,
+		StateMetrics: stateMetrics,
+	}
+	return &metrics, nil
 }
