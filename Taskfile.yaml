@@ -10,7 +10,7 @@ tasks:
     desc: "Run development environment with Docker Compose"
     cmds:
       - echo "Starting dev environment..."
-      - docker compose -f ./deployments/docker-compose-dev.yml up --build 
+      - docker compose -f ./deployments/docker-compose.dev.yml build 
 
   dockerdev-no-cache-up:
     aliases:

@@ -1,0 +1,12 @@
+grpcio
+grpcio-tools
+matplotlib
+python-dotenv
+
+geopandas
+contextily
+shapely
+xyzservices
+
+google-generativeai
+python-dotenv
