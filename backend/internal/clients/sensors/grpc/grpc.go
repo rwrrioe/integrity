@@ -1,4 +1,4 @@
-package grpc_sensor
+package grpc_client
 
 import (
 	"context"
@@ -7,13 +7,13 @@ import (
 
 	"github.com/rwrrioe/integrity/backend/internal/domain/requests"
 	"github.com/rwrrioe/integrity/backend/internal/domain/responses"
-	anomalydetv1 "github.com/rwrrioe/integrity_protos/gen/go/anomaly_detection"
+	v1 "github.com/rwrrioe/integrity_protos/gen/go/anomaly_detection"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Client struct {
-	api anomalydetv1.AnomalyDetectionClient
+	api v1.RiskServiceClient
 }
 
 func NewClient(
@@ -32,33 +32,35 @@ func NewClient(
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	grpcClient := anomalydetv1.NewAnomalyDetectionClient(cc)
+	grpcClient := v1.NewRiskServiceClient(cc)
 
 	return &Client{
 		api: grpcClient,
 	}, nil
 }
 
-func (c *Client) AnalyzeVibration(ctx context.Context, req *requests.VibrationRequest) (*responses.VibrationResponse, error) {
-	op := "grpc.AnalyzeVibration"
+func (c *Client) GetPrediction(ctx context.Context, req *requests.PredictionRequest) (*responses.PredictionResponse, error) {
+	op := "grpc.Predict"
 
-	resp, err := c.api.AnalyzeVibration(ctx, &anomalydetv1.VibrationRequest{
-		DeviceId: req.DeviceId.String(),
-		AccelX:   req.AccelX,
-		AccelY:   req.AccelY,
-		AccelZ:   req.AccelZ,
+	resp, err := c.api.PredictOne(ctx, &v1.RiskRequest{
+		Depth:         req.Depth,
+		DefectType:    req.DefectType,
+		Pressure:      req.Pressure,
+		Diameter:      req.Diameter,
+		Age:           req.Age,
+		RmsVibration:  req.RmsVibration,
+		PeakVibration: req.PeakVibration,
+		AnomalyScore:  req.AnomalyScore,
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("%s:%w", op, err)
 	}
 
-	return &responses.VibrationResponse{
-		Anomaly:     resp.Anomaly,
-		Severity:    resp.Severity,
-		Description: resp.Description,
-		RMS:         resp.Rms,
-		Peak:        resp.Peak,
+	return &responses.PredictionResponse{
+		ObjectId:    req.ObjectId,
+		Probability: float64(resp.RiskPercent),
+		Class:       resp.RiskClass,
 	}, nil
 
 }

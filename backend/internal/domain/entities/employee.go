@@ -1,19 +1,12 @@
 package entities
 
-import "github.com/google/uuid"
-
 type Employee struct {
 	EmployeeId uint
 	FirstName  string
 	LastName   string
-	Phone      string
-	ObjectId   uuid.UUID
+	Lon        float64
+	Lat        float64
 	RoleId     uint
-	RoleName   string
-}
-
-type Role struct {
-	RoleId      uint
-	Name        string
-	Description string
+	DefectId   uint
+	ObjectId   uint
 }

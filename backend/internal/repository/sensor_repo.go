@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/rwrrioe/integrity/backend/internal/domain/entities"
@@ -13,8 +12,8 @@ import (
 type SensorRepo interface {
 	GetSensor(ctx context.Context, sensorId uuid.UUID) (*entities.Sensor, error)
 	AddSensor(ctx context.Context, sensor *entities.Sensor) error
-	GetDeviceSensor(ctx context.Context, deviceid uuid.UUID) (*entities.Sensor, error)
-	ListByObject(ctx context.Context, objectId uuid.UUID) (*[]entities.Sensor, error)
+	GetSensorObject(ctx context.Context, objectId uint) (*entities.Sensor, error)
+	ListByObject(ctx context.Context, objectId uint) (*[]entities.Sensor, error)
 }
 
 type SensorRepository struct {
@@ -29,9 +28,6 @@ func (r *SensorRepository) GetSensor(ctx context.Context, sensorId uuid.UUID) (*
 	var model models.Sensor
 
 	if err := r.db.WithContext(ctx).First(&model, "sensor_id=?", sensorId).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrTaskNotFound
-		}
 		return nil, err
 	}
 
@@ -48,13 +44,10 @@ func (r *SensorRepository) AddSensor(ctx context.Context, sensor *entities.Senso
 	return nil
 }
 
-func (r *SensorRepository) GetDeviceSensor(ctx context.Context, deviceid uuid.UUID) (*entities.Sensor, error) {
+func (r *SensorRepository) GetSensorObject(ctx context.Context, objectId uint) (*entities.Sensor, error) {
 	var model models.Sensor
 
-	if err := r.db.WithContext(ctx).Where("device_id=?", deviceid).Preload("SensorTypes").Find(&model).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrTaskNotFound
-		}
+	if err := r.db.WithContext(ctx).Where("device_id=?", objectId).Preload("SensorTypes").Find(&model).Error; err != nil {
 		return nil, err
 	}
 
@@ -63,13 +56,10 @@ func (r *SensorRepository) GetDeviceSensor(ctx context.Context, deviceid uuid.UU
 	return &sensor, nil
 }
 
-func (r *SensorRepository) ListByObject(ctx context.Context, objectId uuid.UUID) (*[]entities.Sensor, error) {
+func (r *SensorRepository) ListByObject(ctx context.Context, objectId uint) (*[]entities.Sensor, error) {
 	var models []models.Sensor
 
-	if err := r.db.WithContext(ctx).Where("object_id=?", objectId).Preload("Employees").Find(&models).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrTaskNotFound
-		}
+	if err := r.db.WithContext(ctx).Where("object_id=?", objectId).Find(&models).Error; err != nil {
 		return nil, err
 	}
 	var sensors []entities.Sensor

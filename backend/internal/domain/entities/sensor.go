@@ -6,8 +6,7 @@ import (
 
 type Sensor struct {
 	SensorId    uuid.UUID
-	ObjectId    uuid.UUID
-	DeviceId    uuid.UUID
+	ObjectId    uint
 	SensorType  string
 	Name        string
 	Description string

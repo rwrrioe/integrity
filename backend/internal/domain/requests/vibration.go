@@ -1,10 +1,13 @@
 package requests
 
-import "github.com/google/uuid"
-
-type VibrationRequest struct {
-	DeviceId uuid.UUID
-	AccelX   []float64
-	AccelY   []float64
-	AccelZ   []float64
+type PredictionRequest struct {
+	ObjectId      uint
+	DefectType    int32
+	Depth         float32
+	Pressure      float32
+	Diameter      int32
+	Age           int32
+	RmsVibration  float32
+	PeakVibration float32
+	AnomalyScore  float32
 }

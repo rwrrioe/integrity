@@ -1,139 +1,142 @@
 package repository
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/rwrrioe/integrity/backend/internal/domain/entities"
 	"github.com/rwrrioe/integrity/backend/internal/repository/models"
 )
 
-// Task Model -> Task Entity
-func TaskToEntity(model models.Task) entities.Task {
-	return entities.Task{
-		TaskId:      model.TaskId,
-		DeviceId:    model.DeviceId,
-		ObjectId:    model.ObjectId,
-		Name:        model.Name,
-		Description: model.Description,
-		CreatedAt:   model.CreatedAt,
-		SolvedAt:    model.SolvedAt,
-		Importance:  model.Importance,
-		Status:      model.Status,
-		AssignedTo:  model.AssignedTo,
+func DefectToEntity(m models.Defect) entities.Defect {
+	return entities.Defect{
+		DefectId:     m.DefectId,
+		ObjectName:   m.Object.ObjectName,
+		DefectType:   m.DefectType.Name,
+		Description:  m.Description,
+		QualityGrade: m.QualityGrade.QualityGrade,
+		Depth:        m.Depth,
+		Length:       m.Length,
+		Width:        m.Width,
+		Vibration:    m.Vibration,
+		Date:         m.Date,
 	}
 }
 
-// Task Entity -> Task Model
-func TaskToModel(entity entities.Task) models.Task {
-	return models.Task{
-		TaskId:      entity.TaskId,
-		DeviceId:    entity.DeviceId,
-		ObjectId:    entity.ObjectId,
-		Name:        entity.Name,
-		Description: entity.Description,
-		CreatedAt:   entity.CreatedAt,
-		SolvedAt:    entity.SolvedAt,
-		Importance:  entity.Importance,
-		Status:      entity.Status,
-		AssignedTo:  entity.AssignedTo,
+func DefectToModel(e entities.Defect) (models.Defect, bool) {
+	id, ok := qualityGradeToId(e.QualityGrade)
+	if !ok {
+		return models.Defect{}, false
+	}
+
+	return models.Defect{
+		DefectId:       e.DefectId,
+		Description:    e.Description,
+		QualityGradeId: uint(id),
+		Depth:          e.Depth,
+		Length:         e.Length,
+		Width:          e.Width,
+		Vibration:      e.Vibration,
+		Date:           e.Date,
+	}, true
+}
+
+func DiagnosticToEntity(m models.Diagnostic) entities.Diagnostic {
+	return entities.Diagnostic{
+		DiagnosticId: m.DiagnosticId,
+		ObjectId:     m.ObjectId,
+		Method:       entities.METHOD(m.MethodId),
+		Date:         m.Date,
+		Temperature:  m.Temperature,
+		Humidity:     m.Humidity,
+		Illumination: m.Illumination,
 	}
 }
 
-// Device Model -> Device Entity
-func DeviceToEntity(model models.Device) entities.Device {
-	return entities.Device{
-		DeviceId:     model.DeviceId,
-		Name:         model.Name,
-		ObjectId:     model.ObjectId,
-		Description:  model.Description,
-		Condition:    model.Condition,
-		Status:       model.Status,
-		LastRepaired: model.LastRepaired,
+func DiagnosticToModel(e entities.Diagnostic) models.Diagnostic {
+	return models.Diagnostic{
+		DiagnosticId: e.DiagnosticId,
+		ObjectId:     e.ObjectId,
+		MethodId:     uint(e.Method),
+		Date:         e.Date,
+		Temperature:  e.Temperature,
+		Humidity:     e.Humidity,
+		Illumination: e.Illumination,
 	}
 }
 
-// Device Entity -> Device Model
-func DeviceToModel(entity entities.Device) models.Device {
-	return models.Device{
-		DeviceId:     entity.DeviceId,
-		Name:         entity.Name,
-		ObjectId:     entity.ObjectId,
-		Description:  entity.Description,
-		Condition:    entity.Condition,
-		Status:       entity.Status,
-		LastRepaired: entity.LastRepaired,
-	}
-}
-
-// Object Model -> Object Entity
-func ObjectToEntity(model models.Object) entities.Object {
+func ObjectToEntity(m models.Object) entities.Object {
 	return entities.Object{
-		ObjectId:    model.ObjectId,
-		Name:        model.Name,
-		Description: model.Description,
-		Address:     model.Address,
+		ObjectId: m.ObjectId,
+		Name:     m.ObjectName,
+		Lat:      m.Lat,
+		Lon:      m.Lon,
+		Material: m.Material,
 	}
 }
 
-// Device Entity -> Device Model
-func ObjectToModel(entity entities.Object) models.Object {
+func ObjectToModel(e entities.Object) models.Object {
 	return models.Object{
-		ObjectId:    entity.ObjectId,
-		Name:        entity.Name,
-		Description: entity.Description,
-		Address:     entity.Address,
+		ObjectId:   e.ObjectId,
+		ObjectName: e.Name,
+		Lat:        e.Lat,
+		Lon:        e.Lon,
+		Material:   e.Material,
 	}
 }
 
-// Employee Model -> Employee Entity
-func EmployeeToEntity(model models.Employee) entities.Employee {
-	return entities.Employee{
-		EmployeeId: model.EmployeeId,
-		FirstName:  model.FirstName,
-		LastName:   model.LastName,
-		Phone:      model.Phone,
-		ObjectId:   model.ObjectId,
-		RoleId:     model.RoleId,
-		RoleName:   model.Role.Name,
-	}
-}
-
-// Employee Entity -> Employee Model
-func EmployeeToModel(entity entities.Employee) models.Employee {
-	return models.Employee{
-		EmployeeId: entity.EmployeeId,
-		FirstName:  entity.FirstName,
-		LastName:   entity.LastName,
-		Phone:      entity.Phone,
-		ObjectId:   entity.ObjectId,
-		RoleId:     entity.RoleId,
-	}
-}
-
-// Sensor Model -> Sensor Entity
-func SensorToEntity(model models.Sensor) entities.Sensor {
+func SensorToEntity(m models.Sensor) entities.Sensor {
 	return entities.Sensor{
-		SensorId:    model.SensorId,
-		ObjectId:    model.ObjectId,
-		DeviceId:    model.DeviceId,
-		SensorType:  model.SensorType.Name,
-		Name:        model.Name,
-		Description: model.Description,
+		SensorId:    m.SensorId,
+		ObjectId:    m.ObjectId,
+		SensorType:  fmt.Sprint(m.SensorTypeId),
+		Name:        m.Name,
+		Description: m.Description,
 	}
 }
 
-// Sensor Entity -> Sensor Model
-func SensorToModel(entity entities.Sensor) models.Sensor {
-	typeId := sensorTypeMap[entity.SensorType]
-
+func SensorToModel(e entities.Sensor) models.Sensor {
 	return models.Sensor{
-		SensorId:     entity.SensorId,
-		DeviceId:     entity.DeviceId,
-		ObjectId:     entity.DeviceId,
-		SensorTypeId: typeId,
-		Name:         entity.Name,
-		Description:  entity.Description,
+		SensorId:     e.SensorId,
+		ObjectId:     e.ObjectId,
+		SensorTypeId: 0,
+		Name:         e.Name,
+		Description:  e.Description,
 	}
 }
 
-var sensorTypeMap = map[string]uint{
-	"Трехосевой цифровой акселерометр": 1,
+func EmployeeToModel(e entities.Employee) models.Employee {
+	return models.Employee{
+		EmployeeId: e.EmployeeId,
+		FirstName:  e.FirstName,
+		LastName:   e.LastName,
+		RoleId:     e.RoleId,
+		Lon:        e.Lat,
+		Lat:        e.Lon,
+	}
+}
+
+// --- Model → Entity ---
+func EmployeeToEntity(m models.Employee) entities.Employee {
+	return entities.Employee{
+		EmployeeId: m.EmployeeId,
+		FirstName:  m.FirstName,
+		LastName:   m.LastName,
+		RoleId:     m.RoleId,
+		Lon:        m.Lon,
+		Lat:        m.Lat,
+	}
+}
+
+var qualityGradeMap = map[string]int{
+	"удовлетворительно": 1,
+	"допустимо":         2,
+	"требует мер":       3,
+	"недопустимо":       4,
+}
+
+func qualityGradeToId(s string) (int, bool) {
+	s = strings.TrimSpace(strings.ToLower(s))
+	id, ok := qualityGradeMap[s]
+	return id, ok
 }

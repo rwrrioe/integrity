@@ -1,17 +1,18 @@
 package entities
 
-import "github.com/google/uuid"
-
 type Object struct {
-	ObjectId    uuid.UUID
-	Name        string
-	Description string
-	Address     string
+	ObjectId uint
+	Name     string
+	Lon      float64
+	Lat      float64
+	Material string
 }
 
 type ObjectFullInfo struct {
-	Object    Object
-	Devices   []Device
-	Tasks     []Task
-	Employees []Employee
+	Object      Object               `json:"object"`
+	Employees   []Employee           `json:"employees"`
+	Defect      []Defect             `json:"defects"`
+	Diagnostics []Diagnostic         `json:"diagnostics"`
+	History     []MonthlyProbability `json:"motnhly_probability"`
+	Sensors     []Sensor             `json:"sensors"`
 }
